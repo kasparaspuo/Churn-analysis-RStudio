@@ -1,3 +1,4 @@
 # octocat
-My personal repository.
-Hi there
+Hi there!
+This is my personal repository.
+
