@@ -1,0 +1,410 @@
+---
+title: "Assignment 2"
+format: html
+editor: visual
+---
+
+
+Loading our dataset "Adult"
+
+
+```{r}
+# Input data set Churn into Data Frame "adult" 
+adult <- read.csv(file = "C:/Users/kaspa/OneDrive/Desktop/Studies/Semester 2/KDDV/Assignment 1/DatasetsLarose/adult.txt",
+                 stringsAsFactors = TRUE)
+# Checking an overview the new Data Frame "churn"
+head(adult)
+summary(adult)
+str(adult)
+```
+
+
+The target variable in our data set is income, and the goal is to classify income based on the other variables
+
+Solutions to questions 22-26 & 28-35 below.
+
+
+```{r Question 22}
+# Categorical Variables: These are variables that represent categories or groups. Factors or characters usually indicate categorical variables.
+
+# Identify the classes of each variable
+variable_classes <- sapply(adult, class)
+
+# Find categorical variables
+categorical_variables <- names(variable_classes[variable_classes %in% c("factor")])
+#TO DELETE INFO FOR ME: Code explanation: %in% is a binary operator in R that checks if elements of the vector on the left (variable_classes) are present in the vector on the right (c("factor")
+
+
+# Continuous Variables: These are variables that can take any value within a range. Integers or doubles suggest continuous variables.
+
+# Find continuous variables
+continuous_variables <- names(variable_classes[variable_classes %in% c("integer")])
+
+# Printing the output
+cat("Categorical:", paste(categorical_variables, collapse = ", "), "\n")
+cat("Continuous:", paste(continuous_variables, collapse = ", "))
+```
+
+
+So, our results for Question 22 are:
+
+Categorical variables: workclass, education, marital.status, occupation, relationship, race, sex, native.country, income
+
+Continuous variables: age, demogweight, education.num, capital.gain, capital.loss, hours.per.week
+
+
+```{r Question 23}
+# Displaying the first 10 records of the Adult dataset
+head(adult, 10)
+```
+
+```{r Question 24}
+# Correlation is a measure of the linear relationship between such variables, thus we will focus on continuous variables
+
+# Selecing only the continuous variables from the dataset by creating a subset
+adult_continuous <- adult[, continuous_variables]
+# Computing the correlation matrix (excluding NA/missing values)
+correlation_matrix <- cor(adult_continuous, use = "complete.obs") #"complete.obs" tells R to use only complete case(rows with no missing values)
+
+#Visualising the correlated variables
+library(corrplot)
+corrplot(correlation_matrix, method = "color")
+```
+
+
+So The correlation coefficient values range from -1 to 1, where:
+
+-   **`1`** indicates a perfect positive correlation.
+
+-   **`0`** indicates no linear correlation.
+
+-   **`-1`** indicates a perfect negative correlation.
+
+From the matrix, we can observe the following:
+
+1.  **age and hours.per.week**: There seems to be little to no correlation between age and hours worked per week, as indicated by the white to light blue color.
+
+2.  **education.num and age**: These two variables also do not appear to have a strong correlation, suggested by the light color in the matrix.
+
+3.  **capital.gain and capital.loss**: These variables typically have little correlation with other variables, as capital gains and losses can occur regardless of age, hours worked, etc. This seems to be the case in our dataset as well, indicated by the light colors.
+
+4.  **capital.gain and education.num**: There seems to be a slight positive correlation, indicated by a light blue color. This could imply that individuals with higher education might have more capital gains, possibly due to better investment opportunities or higher incomes that allow for investment.
+
+5.  **capital.loss and hours.per.week**: This pair shows a very weak correlation.
+
+6.  **demogweight**: This variable does not seem to have strong correlations with any of the other variables. It doesn't linearly relate to the other variables.
+
+
+```{r Question 25}
+#Our target variable is income.
+library(ggplot2)
+
+# Loop through each categorical variable
+for (var in categorical_variables) {
+# Create the bar chart with income overlay
+p <- ggplot(adult, aes_string(x = var, fill = 'income')) +
+geom_bar(position = 'fill') + # Normalizes the bar heights to compare proportions
+labs(title = paste("Bar Chart of", var, "with Income Overlay"),
+x = var, 
+y = "Proportion of Income") +
+theme_minimal() +
+scale_fill_brewer(palette = "Set1") +
+theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8)) + # Rotate and adjust text size
+        scale_x_discrete(guide = guide_axis(n.dodge = 2)) # #overlapping text in the x-axis labels of ggplot2 charts, according to professor's announcement, adjusting the presentation of these labels to improve readability
+print(p)
+}
+```
+
+
+Discussing only the variables that have a relationship with the target variable (Question 25 part a):
+
+**Workclass**: The distribution of income varies by workclass. Some workclasses have a higher proportion of individuals earning more than \$50K, which may indicate a correlation between workclass and income level.
+
+**Education**: There is a clear trend showing that higher educational attainment is associated with a higher proportion of individuals earning more than \$50K. This suggests a strong relationship between education level and income, which is expected as higher education often leads to better-paying jobs.
+
+**Marital Status**: Marital status appears to influence income level. For example, individuals who are married-civ-spouse tend to have a higher proportion of earning more than \$50K compared to other marital statuses. This could be due to dual-income households or societal factors that correlate stable relationships with higher income.
+
+**Occupation**: Certain occupations, like Exec-managerial and Prof-specialty, have a higher percentage of individuals earning more than \$50K. This indicates that occupation is a significant predictor of income, reflecting the economic value of different types of work.
+
+**Relationship**: Similar to marital status, the relationship status of an individual seems to have an impact on income. Husbands, for instance, have a higher likelihood of earning above \$50K, which might be related to traditional gender roles and earning dynamics within households.
+
+**Race**: The charts suggest some variation in income distribution among different racial groups. However, it's crucial to consider socioeconomic factors and potential biases in the data. Race may interact with other variables, like education and occupation, in complex ways.
+
+**Sex**: There is a noticeable difference between males and females in terms of income, with a higher proportion of males earning more than \$50K. This reflects known gender pay gaps and is a critical factor to consider in any analysis of income.
+
+**Native Country**: The proportion of individuals earning more than \$50K varies significantly by native country. This might be influenced by the socioeconomic status of immigrants from different countries, the local economy, and opportunities available to individuals.
+
+Variables that are expected to make a significant appearance in any data mining classification model we work with (Question 25 part b):
+
+In a data mining classification model designed to predict income level, based on the bar charts provided and common patterns observed in socio-economic data, the following variables would likely make a significant appearance:
+
+**Education**: Education level is one of the most consistent predictors of income across various analyses. Higher education typically correlates with higher income potential, as seen in the distribution of individuals earning more than \$50K in the provided charts.
+
+**Occupation**: Occupation directly relates to income as it represents the kind of work an individual does and the economic value associated with it. Certain occupations tend to pay more, and thus they are expected to be strong predictors in a model.
+
+**Marital Status**: Marital status can be a significant predictor, possibly due to factors like combined household income and the economic stability that might be associated with being married.
+
+**Relationship**: The role within the family (e.g., husband, wife, own-child) can influence earning potential and financial status, likely due to a combination of societal norms and economic dynamics.
+
+**Sex**: Given the observed differences in income distribution between males and females, gender may emerge as a significant variable in the model, reflecting the ongoing issues around the gender pay gap.
+
+**Workclass**: The class of work (e.g., private, federal-gov, self-employed) provides insight into the employment sector, which can vary greatly in terms of income level.
+
+**Native Country**: Although it can be a complex and sometimes less direct predictor due to a variety of socio-economic factors, the native country might still influence income levels due to differences in educational and professional opportunities.
+
+It's important to note that while these variables may be predictive, care must be taken to ensure that the use of variables like race, sex, and native country does not lead to discriminatory practices.
+
+
+```{r Question 26}
+# Assuming 'adult' is your dataset and 'categorical_variables' is a vector of categorical variable names
+for (i in 1:(length(categorical_variables) - 1)) {
+    for (j in (i+1):length(categorical_variables)) {
+        cat("Crosstabulation of", categorical_variables[i], "and", categorical_variables[j], ":\n")
+        print(table(adult[[categorical_variables[i]]], adult[[categorical_variables[j]]]))
+        cat("\n")
+    }
+}
+#This nested loop function will go through each unique pair of categorical variables in your dataset and print a crosstabulation for each pair.
+```
+
+
+So, from the data above we can identify the following relationships:
+
+1.  **Workclass and Education**: There seems to be a higher frequency of individuals with a high school graduation working in the private sector. Advanced degrees (e.g., Doctorate, Masters) are more common in government jobs, suggesting a potential requirement or preference for higher education in these sectors.
+
+2.  **Workclass and Marital Status**: Most individuals who are married-civ-spouse are in the private sector, which is likely reflective of the larger number of people in that sector overall.
+
+3.  **Workclass and Occupation**: There is a large number of missing values ('?') for occupation within certain workclasses, which could indicate data entry issues or that the occupation is not applicable for those entries.
+
+4.  **Workclass and Relationship**: A large number of husbands are associated with the private sector, which again likely reflects the overall employment distribution rather than a specific trend.
+
+5.  **Workclass and Race**: The private sector is the most diverse in terms of race, which could be due to its size and the variety of job types available within it.
+
+6.  **Workclass and Sex**: More males are represented in the private sector, and there's a slight male dominance in every workclass category. This could reflect broader societal trends in workforce participation.
+
+7.  **Education and Marital Status**: Higher education levels are generally associated with being married-civ-spouse, which might suggest that people with higher education levels marry at different rates or it could be a reflection of the age distribution since people tend to achieve higher education as they get older.
+
+8.  **Education and Occupation**: Higher education levels correspond to professional specialty occupations, which is expected since these jobs typically require advanced qualifications.
+
+9.  **Marital Status and Occupation**: Married-civ-spouse is the most common marital status across almost all occupations, likely reflecting the distribution of marital status in the general population.
+
+10. **Marital Status and Relationship**: As expected, all husbands and wives are categorized as married-civ-spouse. This is a logical consistency in the data.
+
+11. **Marital Status and Race**: White individuals are the most frequent in every category of marital status, which may reflect the demographic composition of the data's population.
+
+12. **Marital Status and Sex**: There are more divorced females than males, which could be a point of interest for sociological investigation.
+
+13. **Marital Status and Native Country**: The United States has the highest counts across all categories of marital status, which is expected if the dataset primarily consists of individuals from the United States.
+
+14. **Occupation and Relationship**: Occupations such as Exec-managerial and Prof-specialty have a high count of husbands, which might indicate that within the dataset, males are more frequently in these roles.
+
+15. **Occupation and Race**: Most occupations are dominated by White individuals, again likely a reflection of the dataset's demographics.
+
+16. **Occupation and Sex**: Craft-repair and Exec-managerial occupations have a higher count of males, while Adm-clerical has a higher count of females, which could indicate gender trends in job roles.
+
+17. **Occupation and Native Country**: Similar to marital status, the United States dominates the native country across all occupations, consistent with the dataset being predominantly from the United States.
+
+18. **Relationship and Race**: The husband role is primarily associated with White individuals, followed by Black individuals.
+
+19. **Relationship and Sex**: The overwhelming majority of husbands are male, and the overwhelming majority of wives are female, which is consistent with traditional marital roles.
+
+20. **Relationship and Native Country**: The majority of relationships are associated with the United States, with very few relationships associated with other countries.
+
+21. **Race and Sex**: The White race has the highest counts for both female and male, which is consistent with the overall demographic distribution in the dataset.
+
+22. **Race and Native Country**: Most individuals are from the United States across all races, with very few from other countries.
+
+23. **Sex and Native Country**: The male count is higher than the female count for most native countries, which could suggest a gender imbalance in the dataset or reflect immigration patterns.
+
+24. **Native Country and Income**: The United States has the highest count of individuals earning both above and below 50K, with most other countries having few individuals earning above 50K. This could suggest economic differences based on country of origin or reflect the opportunities available in the United States compared to other countries.
+
+These insights can be valuable for understanding the socioeconomic and demographic factors at play in the dataset and can guide further analysis.
+
+Question 28
+
+Based on the provided crosstabulations and descriptions, we can identify several potential anomalies or points of interest in the dataset:
+
+1.  **Missing Values or Placeholder (\'?\') Entries**: There is a significant number of entries with a placeholder value of '?' in various fields such as occupation and workclass. These represent missing or unrecorded information.
+
+    **What to do**: Missing values need to be handled appropriately. Options include imputation (replacing missing values with statistical estimates), omission (removing records with missing values), or treating them as a separate category if the missingness is informative.
+
+2.  **Imbalance in Workclass**: There is a heavy skew towards the Private sector in the workclass variable, which could overshadow trends in other categories during analysis.
+
+    **What to do**: Recognize this imbalance in interpretive models and consider complex stratified sampling or weighted analysis to ensure other workclass categories are adequately represented.
+
+3.  **Gender Imbalance in Occupations**: Some occupations show a significant gender imbalance, which may reflect real-world job market conditions but could also bias predictive models.
+
+    **What to do**: Investigate whether this imbalance is due to data collection or genuine market demographics. If it's the former, consider collecting more balanced data; if it's the latter, take this into account during modeling and analysis.
+
+4.  **Marital Status and Relationship Consistencies**: The fields of marital status and relationship are logically consistent (e.g., husbands are married-civ-spouse), but this could also indicate redundancy.
+
+    **What to do**: Examine these fields for multicollinearity before using them in predictive modeling. If they are highly correlated, consider combining them or excluding one to reduce redundancy.
+
+5.  **Race Distribution**: The race variable is heavily skewed towards White, which could affect the generalizability of any analytical models developed from this dataset.
+
+    **What to do**: For modeling, consider techniques that can handle complex imbalanced classes, or collect more data to balance the race variable.
+
+6.  **Native Country**: Most of the dataset is concentrated in the United States, with sparse representation from other countries.
+
+    **What to do**: If the focus is on the United States, this may not be an issue. However, for models that should generalize internationally, data collection might need to be expanded.
+
+7.  **High-Level Education and Income**: There is an observable trend where higher education levels correspond to higher income brackets, which is expected but could also lead to model overfitting on this variable.
+
+8.  **Age and Work Hours**: If not already done, check the correlation between age and hours worked per week. If older age groups tend to work fewer hours, this could be indicative of retirement trends.
+
+    **What to do**: If such trends are present and relevant to the analysis, they should be accounted for in the model.
+
+
+```{r Question 29}
+numerical_variables <- c("age", "capital.gain", "capital.loss", "hours.per.week")
+
+# Use lapply to apply a function over the specified numerical variables
+stats <- lapply(adult[numerical_variables], function(x) {
+  c(Mean = mean(x, na.rm = TRUE), 
+    Median = median(x, na.rm = TRUE), 
+    Min = min(x, na.rm = TRUE), 
+    Max = max(x, na.rm = TRUE), 
+    SD = sd(x, na.rm = TRUE))
+})
+
+# Convert the list to a data frame for a nicer display
+stats_df <- as.data.frame(stats)
+
+# Print the statistics data frame
+print(stats_df)
+```
+
+
+From the table above, we can see that the median values for capital gains and losses are zero, indicating that more than half of the people in the dataset did not have capital gains or losses within the recorded period. The standard deviation for hours worked per week is relatively small, showing that most individuals work around a typical 40-hour work week, whereas the standard deviations for capital gains and losses are relatively high, suggesting that there are individuals with very high capital gains or losses, but these are outliers compared to the rest of the population.
+
+
+```{r Question 30}
+library(ggplot2)
+
+numerical_variables <- c("age", "capital.gain", "capital.loss", "hours.per.week")
+
+# Loop through each numerical variable to create histograms
+for (var in numerical_variables) {
+  ggplot(adult, aes_string(x = var, fill = 'income')) +
+    geom_histogram(position = 'fill', bins = 30, alpha = 0.6) +
+    scale_y_continuous(labels = scales::percent) +
+    labs(title = paste("Normalized Histogram of", var, "with Income Overlay"),
+         x = var,
+         y = "Percentage") +
+    theme_minimal() +
+    theme(legend.position = "bottom") +
+    scale_fill_brewer(palette = "Set1") -> p
+  
+  print(p)
+}
+```
+
+
+Question 30 a:
+
+These observations suggest that age, capital gains, and hours per week may have a positive correlation with income, whereas capital losses show a less clear pattern. Middle-aged individuals, those with high capital gains, and those who work longer hours seem more likely to have higher incomes. These variables could potentially be strong predictors in a model designed to classify individuals based on income level.
+
+Question 30 b:
+
+The following variables are likely to make a significant appearance in a data mining classification model for predicting income levels:
+
+1.  **Age**:
+
+    -   There is a clear trend showing that middle-aged individuals have a higher likelihood of earning \>\$50K. Age is often a proxy for experience and career advancement, which are correlated with higher income.
+
+2.  **Capital Gain**:
+
+    -   Individuals with higher capital gains seem more likely to have a higher income. Capital gain is a direct indicator of additional earnings and financial investment success, which could be associated with higher overall wealth and income.
+
+3.  **Hours Per Week**:
+
+    -   People working longer hours, particularly over the standard 40-hour workweek, tend to have higher incomes. This suggests a relationship between the amount of work and salary (compensation), possibly indicating overtime pay or the nature of higher-paid jobs requiring longer hours.
+
+4.  **Capital Loss**:
+
+    -   While the relationship is less pronounced than for capital gains, capital losses may still feature in a model, particularly if combined with other financial indicators. High capital losses may be associated with higher income.
+
+
+```{r Question 31}
+numerical_variables <- c("age", "capital.gain", "capital.loss", "hours.per.week")
+
+# Create a panel of scatter plots for each pair of numerical variables
+pairs(adult[numerical_variables], 
+      upper.panel = NULL, 
+      pch = 20, 
+      main = "Scatter Plot Matrix of Numerical Variables")
+```
+
+
+In conclusion, the scatter plots suggest that there is no strong linear relationship between the numerical variables considered.
+
+Question 32:
+
+Based on the exploratory data analysis (EDA) so far, several interesting sub-groups within the dataset may warrant further investigation:
+
+1.  **Middle-Aged, Higher-Income Earners**: The age histogram with income overlay indicates that individuals in their mid-career (approximately ages 35-55) are more likely to have incomes above \$50K. This group could be further analyzed to understand the factors contributing to their higher income, such as industry, education level, and occupation.
+
+2.  **High Capital Gainers**: There is a small subset of individuals with significant capital gains. This group likely has different investment behaviors and income sources compared to the rest of the population. Investigating their other attributes could yield insights into the demographics and behaviors associated with investment success.
+
+3.  **Individuals Working Over 40 Hours Per Week**: Those working longer hours, especially over 40 hours a week, and earning \>\$50K form an interesting subgroup. It could be valuable to explore their workclass, occupation, and educational background to understand what drives higher earnings in this context.
+
+4.  **Individuals with High Capital Losses**: Similar to high capital gainers, individuals with high capital losses might represent an investor sub-group or those experiencing significant financial changes. Analyzing their professional and demographic characteristics could provide insights into risk profiles or economic factors affecting these losses.
+
+5.  **Zero Capital Gains and Losses**: A large majority of the population seems to have neither capital gains nor losses. This group might represent a particular economic class or set of occupations where investments are not a common source of income. Understanding this group could be important for policy-making or financial services targeting.
+
+6.  **Low Hours Worked with High Income**: If there are individuals who work relatively few hours per week but still earn \>\$50K, this subgroup could represent part-time professionals or those with passive income sources. Their characteristics could inform discussions on work-life balance and alternative income streams.
+
+7.  **Younger and Older Age Groups with Lower Income**: Both the youngest (e.g., under 25) and oldest (e.g., over 65) age groups predominantly fall into the \<=\$50K income category. Further investigation could reveal educational, entry-level career paths, retirement trends, or social-economic factors affecting these age groups.
+
+
+```{r Question 33}
+#'age' is the variable to be binned
+adult$age_binned_max_effect <- cut(adult$age,
+                                   breaks = quantile(adult$age, probs = c(0, 0.25, 0.5, 0.75, 1), na.rm = TRUE),
+                                   labels = c("Young", "Middle-aged", "Senior", "Retired"),
+                                   include.lowest = TRUE)
+
+# Minimize the effect by using evenly spaced bins that do not correspond to significant differences in income
+adult$age_binned_min_effect <- cut(adult$age,
+                                   breaks = seq(min(adult$age, na.rm = TRUE), max(adult$age, na.rm = TRUE), length.out = 5),
+                                   labels = c("Group 1", "Group 2", "Group 3", "Group 4"),
+                                   include.lowest = TRUE)
+```
+
+
+By maximizing the effect of the bins, we creating groups that have more internally consistent income characteristics, which can be useful for predictive modeling or for targeting specific age groups in marketing.
+
+On the other hand, minimizing the effect of bins dilutes these differences. The bins do not correspond to meaningful distinctions in the context of the target variable (income in this case). This approach could be used to ensure a more uniform distribution across categories for certain analytical purposes, but it may not be useful for models or analyses where the goal is to identify and leverage differences between groups.
+
+
+```{r Question 34}
+# Equal width binning
+adult$age_binned_equal_width <- cut(adult$age,
+                                    breaks = 4,  # Or another number of bins that makes sense for your analysis
+                                    labels = c("Group 1", "Group 2", "Group 3", "Group 4"),
+                                    include.lowest = TRUE)
+# Equal frequency binning using quantiles as in the previous example
+adult$age_binned_equal_freq <- cut(adult$age,
+                                   breaks = quantile(adult$age, probs = seq(0, 1, by = 1/4), na.rm = TRUE),  # for quartiles
+                                   labels = c("Quartile 1", "Quartile 2", "Quartile 3", "Quartile 4"),
+                                   include.lowest = TRUE)
+```
+
+
+**Comparison and Discussion:**
+
+-   **Equal Width Bins**: The bins have the same size in terms of the range of 'age', but the number of records in each bin may vary significantly. This can lead to bins with very few or very many records, which may not be useful for detecting patterns related to the target variable.
+
+-   **Equal Frequency Bins**: Each bin has a similar number of records, which ensures that each bin is equally represented in the data. This can be useful for detecting patterns, especially when the target variable is expected to change across the distribution of the binned variable.
+
+**Personal Preference:**
+I would prefer equal frequency binning (quantile-based binning) when the focus is on the target variable and its relationship with the binned variable, as it often provides more actionable insights. This method ensures that each bin has a sufficient number of observations for statistical analyses and better reflects the distribution of the target variable across different segments of the population.
+
+Question 35
+
+**Conclusion:**
+
+The EDA indicates that age, capital gains, and hours worked per week are important factors associated with income levels. These variables can serve as significant predictors in models aimed at classifying individuals by income. The findings also suggest potential target demographics for policy interventions and financial services. The binning exercises revealed the importance of choosing appropriate methods based on the analytical objectives, with equal frequency binning being particularly effective for highlighting income differences across age groups.
+
+These insights can guide further analysis, predictive modeling, and decision-making processes within the context of socio-economic research and planning.
+
